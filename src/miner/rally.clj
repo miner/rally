@@ -5,15 +5,6 @@
 (def init-state {:sides [:a :b :c :d] :server :a :score {:ab 0 :cd 0}})
 
 
-;; not used
-(defn side [state player]
-  (let [sides (:sides state)]
-    (condp = player
-      (sides 0) :right
-      (sides 1) :left
-      (sides 2) :right
-      (sides 3) :left
-      nil)))
 
 (defn partner [player]
   (get {:a :b :b :a :c :d :d :c} player))
@@ -27,7 +18,6 @@
 
 (defn previous-server [player]
   (get {:a :c :d :a :b :d :c :b} player))
-
 
 (defn other-side [side]
   (if (= side :right) :left :right))
@@ -56,6 +46,19 @@
 (defn str-player [p serv]
   (str (player-name p) (server-star p serv)))
 
+
+(defn side [state player]
+  (let [sides (:sides state)]
+    (condp = player
+      (sides 0) :right
+      (sides 1) :left
+      (sides 2) :right
+      (sides 3) :left
+      nil)))
+
+(defn score [state player-or-team]
+  (get-in state [:score (team player-or-team)]))
+
 (defn server [state]
   (:server state))
 
@@ -69,7 +72,7 @@
 
 (defn calc-side [state player]
   (let [server (:server state)
-        player-score (get-in state [:score (team player)])]
+        player-score (score state player)]
     (condp = player
       server (if (even? player-score) :right :left)
       (partner server) (if (odd? player-score) :right :left)
@@ -79,28 +82,14 @@
 
 (defn print-state [state]
   (let [[x y z w] (:sides state)
-        ab (get-in state [:score :ab])
-        cd (get-in state [:score :cd])
+        ab (score state :ab)
+        cd (score state :cd)
         serv (:server state)]
     (println)
     (println "AB=" ab " CD=" cd)
-    #_ (println (case serv
-               :a "A serv,"
-               :b "p serv,"
-               (:c :d) (if (= :a (receiver state))
-                         "A rec ,"
-                         "p rec ,"))
-             "A side/oe" (if (= (get-in state [:sides 0]) :a) "Right/" "Left /")
-             (if (odd? (get-in state [:score :ab])) "Odd ," "Even,")
-             "Total" (if (odd? (+ (get-in state [:score :ab]) (get-in state [:score :cd])))
-                       "Odd"
-                       "Even"))
-
-
-    (do
     (println "" (str-player x serv) "  " (str-player y serv))
     (println "----+----")
-    (println "" (str-player w serv) "  " (str-player z serv)))))
+    (println "" (str-player w serv) "  " (str-player z serv))))
 
 
 
@@ -119,40 +108,12 @@
     (assert-state state)
     (print-state state))))
     
-
-
-
-;; Haven't figured out pattern relative to Total score.
-
-
-;; For ANY server, always my score Odd = Left, Even = Right.  Server's partner is opposite.
+;; For ANY server, always my score Even = Right, Odd = Left.  Server's partner is opposite.
 ;;
-;; For ANY receiver, by opponent's score OpEven = Right , OpOdd = Left
+;; For receiving team, go by previous server with EROL convention.
 ;;
-;; Conjecture:  For A Receiving, if A was last server, then Odd=Left, Right=Even, but if
-;; partner B was last server, then opposite.  Even/Right when A or D serving.  Even/Left
-;; when C or B serving.
-
-
-
-;; A serving, Score Odd = Left, Even = Right
-;; B serving, Score Odd = Left, Even = Right
-;;     When B serving, A position is Score Odd = Right, Even = Left (opposite of server)
-
-;; probably same as above for C/A B/D
-
-;; looks like A receiving is the same Odd=Left, Even=Right
-
-;; A rec  Right if Odd/Odd or Even/Even;  Left if Odd/Even or Even/Odd
-;;   which is really if the opponents are OpEven=Right, OpOdd=Left
-;;
-;; B rec (swap A)  OpEven=Left, OpOdd=Right
-
-
-
-
 ;; One thing that might help people remember their sides in rally scoring is that the
-;; rotation of servers is fixed by the positions at the start of the game. In the diagram,
+;; rotation of servers is fixed by the positions at the start of the game.  Let's say
 ;; the teams are A and B vs C and D. The first server is A and the first receiver is C, on
 ;; their respective right sides. The service order cycles through A, D, B, and C for the
 ;; rest of the game. Note, the first receiver is the last server. So you always know the
