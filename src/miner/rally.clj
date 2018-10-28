@@ -82,17 +82,12 @@
 
 (defn print-state [state]
   (let [[x y z w] (:sides state)
-        ab (score state :ab)
-        cd (score state :cd)
         serv (:server state)]
-    (println)
-    (println "AB=" ab " CD=" cd)
-    (println "" (str-player x serv) "  " (str-player y serv))
-    (println "----+----")
-    (println "" (str-player w serv) "  " (str-player z serv))))
-
-
-
+    (println "~~~~~~~~~~~~~~~~")
+    (printf "%3d    %2s  %2s\n" (score state :ab) (str-player x serv) (str-player y serv))
+    (println "     ----+----")
+    (printf "%3d    %2s  %2s\n" (score state :cd) (str-player w serv) (str-player z serv))))
+  
 (defn assert-state [state]
   (doseq [p [:a :b :c :d]]
     (assert (= (side state p) (calc-side state p))))
@@ -106,7 +101,8 @@
   ([n winner-coll]
    (doseq [state (reductions add-point init-state (take n (cycle winner-coll)))]
     (assert-state state)
-    (print-state state))))
+    (print-state state))
+   (println)))
     
 ;; For ANY server, always my score Even = Right, Odd = Left.  Server's partner is opposite.
 ;;
@@ -123,3 +119,4 @@
 ;; confirmation, think about who is serving and who was the previous server. If you were the
 ;; previous server, you are the “even” player — on the right if your score is even, on the
 ;; left if your score is odd.
+
